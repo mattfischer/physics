@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'window.ui'
 #
-# Created: Mon Jul 31 13:52:48 2017
+# Created: Mon Jul 31 14:47:06 2017
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -31,6 +31,12 @@ class Ui_MainWindow(object):
         MainWindow.setDocumentMode(False)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
+        self.horizontalLayout = QtGui.QHBoxLayout(self.centralwidget)
+        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.canvas = QtGui.QLabel(self.centralwidget)
+        self.canvas.setText(_fromUtf8(""))
+        self.canvas.setObjectName(_fromUtf8("canvas"))
+        self.horizontalLayout.addWidget(self.canvas)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
