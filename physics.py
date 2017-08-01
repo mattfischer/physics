@@ -22,10 +22,13 @@ class Window(QtGui.QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.canvas.paintEvent = self.onCanvasPaintEvent
+        self.ui.canvas.resizeEvent = self.onCanvasResizeEvent
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.onTimeout)
         self.timer.start(FRAME_TIME_MS)
+
+        self.setSimulatorBounds()
 
     def onCanvasPaintEvent(self, event):
         painter = QtGui.QPainter(self.ui.canvas)
@@ -40,6 +43,17 @@ class Window(QtGui.QMainWindow):
             y = circle.position.y * pixel_scale + self.height() / 2
             radius = circle.radius * pixel_scale
             painter.drawEllipse(QtCore.QPoint(x, y), radius, radius)
+
+    def onCanvasResizeEvent(self, event):
+        self.setSimulatorBounds()
+
+    def setSimulatorBounds(self):
+        unit_scale = VIEW_HEIGHT / self.height()
+        min_x = -self.ui.canvas.width() * unit_scale / 2
+        min_y = -VIEW_HEIGHT / 2
+        max_x = -min_x
+        max_y = -min_y
+        self.simulator.setBounds(min_x, min_y, max_x, max_y)
 
     def onTimeout(self):
         self.simulator.advance(FRAME_TIME_MS / 1000.0)
