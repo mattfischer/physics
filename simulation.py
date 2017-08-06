@@ -7,10 +7,10 @@ R = 0.75
 GRAVITY = geo.Vector(0, 20)
 
 class Circle(object):
-    def __init__(self, position, radius, mass, velocity):
+    def __init__(self, position, radius, density, velocity):
         self.position = position
         self.radius = radius
-        self.mass = mass
+        self.mass = density * math.pi * radius * radius
         self.velocity = velocity
 
 class Plane(object):
