@@ -4,9 +4,10 @@ import itertools
 import math
 
 class Circle(object):
-    def __init__(self, position, radius, velocity):
+    def __init__(self, position, radius, mass, velocity):
         self.position = position
         self.radius = radius
+        self.mass = mass
         self.velocity = velocity
 
 class Plane(object):
@@ -31,15 +32,19 @@ class Simulator(object):
     def stabilizeCircle(self, circle, normal, distance):
         circle.position -= normal * distance
 
+    def calculateTransferredMomentum(self, velocity1, velocity2, inverse_mass1, inverse_mass2, normal):
+        return normal * (velocity1 - velocity2) * 2 / (inverse_mass1 + inverse_mass2)
+
     def handleCircleCircleCollision(self, circle1, circle2):
         normal = (circle2.position - circle1.position).normalize()
         distance = circle1.radius + circle2.radius - (circle2.position - circle1.position).magnitude()
         self.stabilizeCircle(circle1, normal, distance / 2)
         self.stabilizeCircle(circle2, -normal, distance / 2)
 
-        p = normal * (circle1.velocity - circle2.velocity)
-        circle1.velocity -= normal * p
-        circle2.velocity += normal * p
+        p = self.calculateTransferredMomentum(circle1.velocity, circle2.velocity, 1.0 / circle1.mass, 1.0 / circle2.mass, normal)
+
+        circle1.velocity -= normal * p / circle1.mass
+        circle2.velocity += normal * p / circle2.mass
 
     def advance(self, time):
         for circle in self.circles:
@@ -59,6 +64,6 @@ class Simulator(object):
             circle_displacement = position_vector * plane.normal - circle.radius
             if circle_displacement <= plane.displacement and circle.velocity * plane.normal < 0:
                 self.stabilizeCircle(circle, -plane.normal, plane.displacement - circle_displacement)
-                p = -plane.normal * circle.velocity * 2
-                circle.velocity += plane.normal * p
+                p = self.calculateTransferredMomentum(circle.velocity, geo.Vector(0, 0), 1.0 / circle.mass, 0, -plane.normal)
+                circle.velocity += plane.normal * p / circle.mass
 
