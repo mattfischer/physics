@@ -40,6 +40,9 @@ class Vector(object):
     def __div__(self, other):
         return Vector(self.x / other, self.y / other)
 
+    def __neg__(self):
+        return self * -1
+
     def magnitude2(self):
         return self * self
 

@@ -9,26 +9,33 @@ class Circle(object):
         self.radius = radius
         self.velocity = velocity
 
+class Plane(object):
+    def __init__(self, normal, displacement):
+        self.normal = normal
+        self.displacement = displacement
+
 class Simulator(object):
     def __init__(self):
         self.circles = []
-        self.min_x = self.min_y = 0
-        self.max_x = self.max_y = 0
+        self.planes = []
 
     def addCircle(self, circle):
         self.circles.append(circle)
 
     def setBounds(self, min_x, min_y, max_x, max_y):
-        self.min_x = min_x
-        self.min_y = min_y
-        self.max_x = max_x
-        self.max_y = max_y
+        self.planes.append(Plane(geo.Vector(1.0, 0), min_x))
+        self.planes.append(Plane(geo.Vector(-1.0, 0), -max_x))
+        self.planes.append(Plane(geo.Vector(0, 1.0), min_y))
+        self.planes.append(Plane(geo.Vector(0, -1.0), -max_y))
 
-    def handleCollision(self, circle1, circle2):
+    def stabilizeCircle(self, circle, normal, distance):
+        circle.position -= normal * distance
+
+    def handleCircleCircleCollision(self, circle1, circle2):
         normal = (circle2.position - circle1.position).normalize()
         distance = circle1.radius + circle2.radius - (circle2.position - circle1.position).magnitude()
-        circle1.position -= normal * (distance / 2)
-        circle2.position += normal * (distance / 2)
+        self.stabilizeCircle(circle1, normal, distance / 2)
+        self.stabilizeCircle(circle2, -normal, distance / 2)
 
         p = normal * (circle1.velocity - circle2.velocity)
         circle1.velocity -= normal * p
@@ -41,25 +48,17 @@ class Simulator(object):
         for (circle1, circle2) in itertools.combinations(self.circles, 2):
             distance = circle1.position - circle2.position
             if (circle1.position - circle2.position).magnitude2() <= (circle1.radius + circle2.radius) ** 2:
-                self.handleCollision(circle1, circle2)
+                self.handleCircleCircleCollision(circle1, circle2)
 
         for circle in self.circles:
             self.handleBounds(circle)
 
     def handleBounds(self, circle):
-        if circle.position.x - circle.radius <= self.min_x:
-            circle.position.x = self.min_x + circle.radius
-            circle.velocity = geo.Vector(-circle.velocity.x, circle.velocity.y)
-
-        if circle.position.x + circle.radius >= self.max_x:
-            circle.position.x = self.max_x - circle.radius
-            circle.velocity = geo.Vector(-circle.velocity.x, circle.velocity.y)
-
-        if circle.position.y - circle.radius <= self.min_y:
-            circle.position.y = self.min_y + circle.radius
-            circle.velocity = geo.Vector(circle.velocity.x, -circle.velocity.y)
-
-        if circle.position.y + circle.radius >= self.max_y:
-            circle.position.y = self.max_y - circle.radius
-            circle.velocity = geo.Vector(circle.velocity.x, -circle.velocity.y)
+        for plane in self.planes:
+            position_vector = geo.Vector(circle.position.x, circle.position.y)
+            circle_displacement = position_vector * plane.normal - circle.radius
+            if circle_displacement <= plane.displacement and circle.velocity * plane.normal < 0:
+                self.stabilizeCircle(circle, -plane.normal, plane.displacement - circle_displacement)
+                p = -plane.normal * circle.velocity * 2
+                circle.velocity += plane.normal * p
 
