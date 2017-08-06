@@ -37,8 +37,8 @@ class Simulator(object):
 
     def handle_circle_circle_collision(self, circle1, circle2):
         distance = circle1.position - circle2.position
-        if (circle1.position - circle2.position).magnitude2() <= (circle1.radius + circle2.radius) ** 2: 
-            normal = (circle2.position - circle1.position).normalize()
+        normal = (circle2.position - circle1.position).normalize()
+        if (circle1.position - circle2.position).magnitude2() <= (circle1.radius + circle2.radius) ** 2 and (circle2.velocity - circle1.velocity) * normal < 0: 
             distance = circle1.radius + circle2.radius - (circle2.position - circle1.position).magnitude()
             self.stabilize_circle(circle1, normal, distance / 2)
             self.stabilize_circle(circle2, -normal, distance / 2)
