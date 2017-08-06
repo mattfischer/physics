@@ -39,12 +39,12 @@ class Simulator(object):
         return normal * (velocity1 - velocity2) * (1 + R) / (inverse_mass1 + inverse_mass2)
 
     def handle_circle_circle_collision(self, circle1, circle2):
-        distance = circle1.position - circle2.position
-        if (circle1.position - circle2.position).magnitude2() <= (circle1.radius + circle2.radius) ** 2 and (circle2.velocity - circle1.velocity) * (circle2.position - circle1.position) < 0: 
-            normal = (circle2.position - circle1.position).normalize()
-            distance = circle1.radius + circle2.radius - (circle2.position - circle1.position).magnitude()
-            self.stabilize_circle(circle1, normal, distance / 2)
-            self.stabilize_circle(circle2, -normal, distance / 2)
+        distance = circle2.position - circle1.position
+        if distance.magnitude2() <= (circle1.radius + circle2.radius) ** 2 and (circle2.velocity - circle1.velocity) * distance < 0:
+            normal = distance.normalize()
+            overlap = circle1.radius + circle2.radius - distance.magnitude()
+            self.stabilize_circle(circle1, normal, overlap / 2)
+            self.stabilize_circle(circle2, -normal, overlap / 2)
 
             p = self.calculate_transferred_momentum(circle1.velocity, circle2.velocity, 1.0 / circle1.mass, 1.0 / circle2.mass, normal)
 
@@ -55,7 +55,8 @@ class Simulator(object):
         position_vector = geo.Vector(circle.position.x, circle.position.y)
         circle_displacement = position_vector * plane.normal - circle.radius
         if circle_displacement <= plane.displacement and circle.velocity * plane.normal < 0:
-            self.stabilize_circle(circle, -plane.normal, plane.displacement - circle_displacement)
+            overlap = plane.displacement - circle_displacement
+            self.stabilize_circle(circle, -plane.normal, overlap)
             p = self.calculate_transferred_momentum(circle.velocity, geo.Vector(0, 0), 1.0 / circle.mass, 0, -plane.normal)
             circle.velocity += plane.normal * p / circle.mass
 
