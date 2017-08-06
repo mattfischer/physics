@@ -49,8 +49,8 @@ class Window(QtGui.QMainWindow):
 
     def set_simulator_bounds(self):
         unit_scale = VIEW_HEIGHT / self.ui.canvas.height()
-        min_x = -self.ui.canvas.width() * unit_scale / 2
-        min_y = -VIEW_HEIGHT / 2
+        min_x = -self.ui.canvas.width() * unit_scale / 2 + 1
+        min_y = -VIEW_HEIGHT / 2 + 1
         max_x = -min_x
         max_y = -min_y
         self.simulator.set_bounds(min_x, min_y, max_x, max_y)
