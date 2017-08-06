@@ -1,5 +1,8 @@
 import geo
 
+import itertools
+import math
+
 class Circle(object):
     def __init__(self, position, radius, velocity):
         self.position = position
@@ -21,10 +24,26 @@ class Simulator(object):
         self.max_x = max_x
         self.max_y = max_y
 
+    def handleCollision(self, circle1, circle2):
+        normal = (circle2.position - circle1.position).normalize()
+        distance = circle1.radius + circle2.radius - (circle2.position - circle1.position).magnitude()
+        circle1.position -= normal * (distance / 2)
+        circle2.position += normal * (distance / 2)
+
+        p = normal * (circle1.velocity - circle2.velocity)
+        circle1.velocity -= normal * p
+        circle2.velocity += normal * p
+
     def advance(self, time):
         for circle in self.circles:
             circle.position += circle.velocity * time   
 
+        for (circle1, circle2) in itertools.combinations(self.circles, 2):
+            distance = circle1.position - circle2.position
+            if (circle1.position - circle2.position).magnitude2() <= (circle1.radius + circle2.radius) ** 2:
+                self.handleCollision(circle1, circle2)
+
+        for circle in self.circles:
             self.handleBounds(circle)
 
     def handleBounds(self, circle):
