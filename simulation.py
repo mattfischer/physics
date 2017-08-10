@@ -18,13 +18,25 @@ class Plane(object):
         self.normal = normal
         self.displacement = displacement
 
+class Polygon(object):
+    def __init__(self, position, rotation, points, velocity, angular_velocity):
+        self.position = position
+        self.rotation = rotation
+        self.points = points
+        self.velocity = velocity
+        self.angular_velocity = angular_velocity
+
 class Simulator(object):
     def __init__(self):
         self.circles = []
         self.planes = []
+        self.polygons = []
 
     def add_circle(self, circle):
         self.circles.append(circle)
+
+    def add_polygon(self, polygon):
+        self.polygons.append(polygon)
 
     def set_bounds(self, min_x, min_y, max_x, max_y):
         self.planes.append(Plane(geo.Vector(1.0, 0), min_x))
@@ -70,4 +82,8 @@ class Simulator(object):
 
         for (circle, plane) in itertools.product(self.circles, self.planes):
             self.handle_circle_plane_collision(circle, plane)
+
+        for polygon in self.polygons:
+            polygon.position += polygon.velocity * time
+            polygon.rotation += polygon.angular_velocity * time
 

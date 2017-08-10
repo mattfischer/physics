@@ -8,6 +8,7 @@ from PySide.QtCore import Qt
 import config
 
 import sys
+import math
 
 FRAME_TIME_MS = 33
 VIEW_HEIGHT = 20.0
@@ -43,6 +44,19 @@ class Window(QtGui.QMainWindow):
             y = circle.position.y * pixel_scale + self.ui.canvas.height() / 2
             radius = circle.radius * pixel_scale
             painter.drawEllipse(QtCore.QPoint(x, y), radius, radius)
+
+        for polygon in self.simulator.polygons:
+            points = []
+            for point in polygon.points:
+                cos = math.cos(polygon.rotation)
+                sin = math.sin(polygon.rotation)
+                x = point.x * cos - point.y * sin
+                y = point.x * sin + point.y * cos
+                x = (x + polygon.position.x) * pixel_scale + self.ui.canvas.width() / 2
+                y = (y + polygon.position.y) * pixel_scale + self.ui.canvas.height() / 2
+                points.append(QtCore.QPoint(x, y))
+
+            painter.drawPolygon(points)
 
     def on_canvas_resize_event(self, event):
         self.set_simulator_bounds()

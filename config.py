@@ -10,5 +10,6 @@ def create_simulator():
     sim.add_circle(simulation.Circle(geo.Point(0,-5), 2, 1, geo.Vector(5, -6)))
     sim.add_circle(simulation.Circle(geo.Point(15,8), 1, 1, geo.Vector(3, 7)))
 
+    sim.add_polygon(simulation.Polygon(geo.Point(3, 3), 45 * 3.14 / 180, [geo.Point(0.5, 0.5), geo.Point(-0.5, 0.5), geo.Point(-0.5, -0.5), geo.Point(0.5, -0.5)], geo.Vector(0, 0), 3.14))
 
     return sim
