@@ -41,14 +41,16 @@ class Window(QtGui.QMainWindow):
             painter.drawEllipse(QtCore.QPoint(x, y), radius, radius)
 
         for polygon in self.simulator.polygons:
+            if polygon.collision:
+                brush = QtGui.QBrush(QtGui.QColor(0xFF, 0x80, 0x80))
+            else:
+                brush = QtGui.QBrush(QtGui.QColor(0xE0, 0xF0, 0xFF))
+            painter.setBrush(brush)
+
             points = []
-            for point in polygon.points:
-                cos = math.cos(polygon.rotation)
-                sin = math.sin(polygon.rotation)
-                x = point.x * cos - point.y * sin
-                y = point.x * sin + point.y * cos
-                x = (x + polygon.position.x) * pixel_scale + self.ui.canvas.width() / 2
-                y = (y + polygon.position.y) * pixel_scale + self.ui.canvas.height() / 2
+            for point in polygon.transformed_points():
+                x = point.x * pixel_scale + self.ui.canvas.width() / 2
+                y = point.y * pixel_scale + self.ui.canvas.height() / 2
                 points.append(QtCore.QPoint(x, y))
 
             painter.drawPolygon(points)
