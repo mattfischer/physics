@@ -5,8 +5,11 @@ class Point(object):
         self.x = x
         self.y = y
 
-    def __str__(self):
-        return '(%s, %s)' % (self.x, self.y)
+    def __repr__(self):
+        return 'geo.Point(%s, %s)' % (self.x, self.y)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
 
     def __add__(self, vector):
         return Point(self.x + vector.x, self.y + vector.y)
@@ -22,8 +25,11 @@ class Vector(object):
         self.x = x
         self.y = y
 
-    def __str__(self):
-        return '(%s, %s)' % (self.x, self.y)
+    def __repr__(self):
+        return 'geo.Vector(%s, %s)' % (self.x, self.y)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
 
     def __add__(self, other):
         return Vector(self.x + other.x, self.y + other.y)

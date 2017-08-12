@@ -99,6 +99,29 @@ class Simulator(object):
         point2 = self.support(points2, -direction)
         return geo.Point(point1.x - point2.x, point1.y - point2.y)
 
+    def epa_distance(self, points1, points2, points):
+        while True:
+            min_point = None
+            min_distance = 0
+            min_direction = None
+            for i in range(0, len(points)):
+                A = points[i]
+                B = points[(i + 1) % len(points)]
+                AB = (B - A).normalize()
+                AO = geo.Point(0, 0) - A
+                direction = AO - AB * (AO * AB)
+                distance = direction.magnitude()
+                if min_point is None or min_distance > distance:
+                    min_point = i
+                    min_distance = distance
+                    min_direction = direction
+
+            new_point = self.minkowski_difference(points1, points2, -min_direction)
+            if new_point == points[min_point] or new_point == points[(min_point + 1) % len(points)]:
+                return (min_distance, min_direction)
+            else:
+                points.insert(min_point + 1, new_point)
+
     def gjk_collision(self, points1, points2):
         direction = geo.Vector(1, 0)
         points = []
@@ -131,6 +154,8 @@ class Simulator(object):
                     del points[i]
                     break
             else:
+                (distance, direction) = self.epa_distance(points1, points2, points)
+                print('Collision distance %s direction %s' % (distance, direction))
                 return True
 
     def handle_polygon_polygon_collision(self, polygon1, polygon2):
