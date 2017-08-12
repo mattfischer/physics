@@ -25,7 +25,7 @@ class Polygon(object):
         self.points = points
         self.velocity = velocity
         self.angular_velocity = angular_velocity
-        self.collision = False
+        self.collision_point = None
 
     def transformed_points(self):
         points = []
@@ -85,18 +85,21 @@ class Simulator(object):
 
     def support(self, points, direction):
         max_point = None
+        max_index = -1
         max_distance = 0
-        for point in points:
+        for i in range(0, len(points)):
+            point = points[i]
             v = point - geo.Point(0, 0)
             distance = v * direction
             if max_point is None or distance > max_distance:
                 max_point = point
                 max_distance = distance
-        return max_point
+                max_index = i
+        return (max_point, max_index)
 
     def minkowski_difference(self, points1, points2, direction):
-        point1 = self.support(points1, direction)
-        point2 = self.support(points2, -direction)
+        (point1, _) = self.support(points1, direction)
+        (point2, _) = self.support(points2, -direction)
         return geo.Point(point1.x - point2.x, point1.y - point2.y)
 
     def epa_distance(self, points1, points2, points):
@@ -122,6 +125,37 @@ class Simulator(object):
             else:
                 points.insert(min_point + 1, new_point)
 
+    def get_collision_point(self, points1, points2, direction):
+        (_, index1) = self.support(points1, -direction)
+        (_, index2) = self.support(points2, direction)
+        Ao = points1[index1]
+        Aa = points1[(index1 + len(points1) - 1) % len(points1)]
+        Ab = points1[(index1 + 1) % len(points1)]
+        Bo = points2[index2]
+        Ba = points2[(index2 + len(points2) - 1) % len(points2)]
+        Bb = points2[(index2 + 1) % len(points2)]
+
+        A1 = Ao - Aa
+        A2 = Ao - Ab
+        B1 = Bo - Ba
+        B2 = Bo - Bb
+
+        if abs(A1 * direction) > abs(A2 * direction):
+            A = A2
+        else:
+            A = A1
+
+        if abs(B1 * direction) > abs(B2 * direction):
+            B = B2
+        else:
+            B = B1
+
+        if abs(A * direction) > abs(B * direction):
+            point = Ao
+        else:
+            point = Bo
+        return point
+
     def gjk_collision(self, points1, points2):
         direction = geo.Vector(1, 0)
         points = []
@@ -139,7 +173,7 @@ class Simulator(object):
 
             AC = points[2] - points[0]
             if AC * direction < AO * direction:
-                return False
+                return None
 
             for i in range(0, 3):
                 C = points[i]
@@ -155,16 +189,17 @@ class Simulator(object):
                     break
             else:
                 (distance, direction) = self.epa_distance(points1, points2, points)
-                print('Collision distance %s direction %s' % (distance, direction))
-                return True
+                point = self.get_collision_point(points1, points2, direction)
+                return point
 
     def handle_polygon_polygon_collision(self, polygon1, polygon2):
         points1 = polygon1.transformed_points()
         points2 = polygon2.transformed_points()
 
-        if self.gjk_collision(points1, points2):
-            polygon1.collision = True
-            polygon2.collision = True
+        point = self.gjk_collision(points1, points2)
+        if point:
+            polygon1.collision_point = point
+            polygon2.collision_point = point
 
     def advance(self, time):
         for circle in self.circles:
@@ -174,7 +209,7 @@ class Simulator(object):
         for polygon in self.polygons:
             polygon.position += polygon.velocity * time
             polygon.rotation += polygon.angular_velocity * time
-            polygon.collision = False
+            polygon.collision_point = None
 
         for (circle1, circle2) in itertools.combinations(self.circles, 2):
             self.handle_circle_circle_collision(circle1, circle2)
