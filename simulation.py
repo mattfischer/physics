@@ -19,13 +19,14 @@ class Plane(object):
         self.displacement = displacement
 
 class Polygon(object):
-    def __init__(self, position, rotation, points, velocity, angular_velocity):
+    def __init__(self, position, rotation, points, mass, moment, velocity, angular_velocity):
         self.position = position
         self.rotation = rotation
         self.points = points
+        self.mass = mass
+        self.moment = moment
         self.velocity = velocity
         self.angular_velocity = angular_velocity
-        self.collision_point = None
 
     def transformed_points(self):
         points = []
@@ -163,7 +164,7 @@ class Simulator(object):
         points.append(self.minkowski_difference(points1, points2, -direction))
 
         if points[0].x < 0 or points[1].x > 0:
-            return False
+            return (None, None)
 
         while True:
             AB = (points[1] - points[0]).normalize()
@@ -173,7 +174,7 @@ class Simulator(object):
 
             AC = points[2] - points[0]
             if AC * direction < AO * direction:
-                return None
+                return (None, None)
 
             for i in range(0, 3):
                 C = points[i]
@@ -190,16 +191,28 @@ class Simulator(object):
             else:
                 (distance, direction) = self.epa_distance(points1, points2, points)
                 point = self.get_collision_point(points1, points2, direction)
-                return point
+                return (point, direction)
 
     def handle_polygon_polygon_collision(self, polygon1, polygon2):
         points1 = polygon1.transformed_points()
         points2 = polygon2.transformed_points()
 
-        point = self.gjk_collision(points1, points2)
+        (point, direction) = self.gjk_collision(points1, points2)
         if point:
-            polygon1.collision_point = point
-            polygon2.collision_point = point
+            r1 = point - polygon1.position
+            r2 = point - polygon2.position
+            v1 = polygon1.velocity + polygon1.angular_velocity % r1
+            v2 = polygon2.velocity + polygon2.angular_velocity % r2
+
+            direction = direction.normalize()
+            rnv = (v2 - v1) * direction
+            if rnv > 0:
+                R = 1
+                p = direction * rnv * ((1 + R) / (1.0 / polygon1.mass + 1 / polygon2.mass + (direction % r1) * (direction % r1) / polygon1.moment + (direction % r2) * (direction % r2) / polygon2.moment))
+                polygon1.velocity += p / polygon1.mass
+                polygon2.velocity -= p / polygon2.mass
+                polygon1.angular_velocity += (r1 % p) / polygon1.moment
+                polygon2.angular_velocity -= (r2 % p) / polygon2.moment
 
     def advance(self, time):
         for circle in self.circles:
@@ -208,8 +221,7 @@ class Simulator(object):
 
         for polygon in self.polygons:
             polygon.position += polygon.velocity * time
-            polygon.rotation += polygon.angular_velocity * time
-            polygon.collision_point = None
+            polygon.rotation += polygon.angular_velocity.z * time
 
         for (circle1, circle2) in itertools.combinations(self.circles, 2):
             self.handle_circle_circle_collision(circle1, circle2)

@@ -41,10 +41,7 @@ class Window(QtGui.QMainWindow):
             painter.drawEllipse(QtCore.QPoint(x, y), radius, radius)
 
         for polygon in self.simulator.polygons:
-            if polygon.collision_point:
-                brush = QtGui.QBrush(QtGui.QColor(0xFF, 0x80, 0x80))
-            else:
-                brush = QtGui.QBrush(QtGui.QColor(0xE0, 0xF0, 0xFF))
+            brush = QtGui.QBrush(QtGui.QColor(0xE0, 0xF0, 0xFF))
             painter.setBrush(brush)
 
             points = []
@@ -54,13 +51,6 @@ class Window(QtGui.QMainWindow):
                 points.append(QtCore.QPoint(x, y))
 
             painter.drawPolygon(points)
-            if polygon.collision_point:
-                painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
-                x = polygon.collision_point.x * pixel_scale + self.ui.canvas.width() / 2
-                y = polygon.collision_point.y * pixel_scale + self.ui.canvas.height() / 2
-
-                painter.drawEllipse(QtCore.QPoint(x, y), 5, 5)
-                painter.setBrush(brush)
 
     def on_canvas_resize_event(self, event):
         self.set_simulator_bounds()
